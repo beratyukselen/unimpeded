@@ -7,18 +7,23 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct HomeView: View {
+    
+    @StateObject private var viewModel = HomeViewModel()
+    
     var body: some View {
         VStack {
             Image(systemName: "globe")
                 .imageScale(.large)
                 .foregroundStyle(.tint)
-            Text("Hello, world!")
+            
+            Text(viewModel.title)
+                .padding()
         }
         .padding()
     }
 }
 
 #Preview {
-    ContentView()
+    HomeView()
 }
