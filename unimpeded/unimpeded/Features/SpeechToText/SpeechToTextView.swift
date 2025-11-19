@@ -38,7 +38,7 @@ struct SpeechToTextView: View {
                     .clipShape(Circle())
                     .shadow(radius: 10)
             }
-            .padding(.bottom, 40)
+            .padding(.bottom, 80)
 
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
