@@ -18,15 +18,28 @@ class TextToSpeechViewModel: ObservableObject {
         
         guard !textToSpeak.isEmpty else { return }
         
-        let utterance = AVSpeechUtterance(string: textToSpeak)
+        // MARK: - Audio Session Fix
+        // Sesin ahize yerine hoparlörden çıkmasını sağlayan ayar.
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            // .playAndRecord: Uygulamada mikrofon da kullanıldığı için bu kategori şart.
+            // .defaultToSpeaker: Sesi zorla hoparlöre yönlendirir.
+            try audioSession.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
+            try audioSession.setActive(true)
+        } catch {
+            print("Ses oturumu hatası: \(error.localizedDescription)")
+        }
         
+        // Konuşma ayarları
+        let utterance = AVSpeechUtterance(string: textToSpeak)
         utterance.voice = AVSpeechSynthesisVoice(language: "tr-TR")
         utterance.rate = 0.5
         utterance.pitchMultiplier = 1.0
         utterance.volume = 1.0
         
+        // Zaten konuşuyorsa durdur, yenisine başla
         if synthesizer.isSpeaking {
-            synthesizer.stopSpeaking(at: .immediate )
+            synthesizer.stopSpeaking(at: .immediate)
         }
         
         synthesizer.speak(utterance)
