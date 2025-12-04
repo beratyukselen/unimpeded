@@ -7,22 +7,23 @@
 
 import Foundation
 import Speech
+import AVFoundation
 
 class SpeechToTextViewModel: ObservableObject {
     
+    // MARK: - Published Properties
     
     @Published var transcribedText: String = "Konuşmanızı metne dönüştürmek için butona basın..."
     @Published var isRecording: Bool = false
     @Published var errorMessage: String?
+    @Published var audioLevel: CGFloat = 0.0
+    
+    // MARK: - Apple Speech Properties
     
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "tr-TR"))
-    
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
-    
     private var recognitionTask: SFSpeechRecognitionTask?
-    
     private let audioEngine = AVAudioEngine()
-    
     
     init() {
         requestSpeechAuthorization()
@@ -41,15 +42,9 @@ class SpeechToTextViewModel: ObservableObject {
             OperationQueue.main.addOperation {
                 switch authStatus {
                 case .authorized:
-                    print("Konuşma tanıma izni verildi.")
-                case .denied:
-                    self.errorMessage = "Konuşma tanıma izni reddedildi."
-                case .restricted:
-                    self.errorMessage = "Konuşma tanıma bu cihazda kısıtlanmış."
-                case .notDetermined:
-                    self.errorMessage = "Konuşma tanıma izni henüz verilmedi."
-                @unknown default:
-                    self.errorMessage = "Bilinmeyen bir yetki durumu oluştu."
+                    print("Erişim izni tamam.")
+                default:
+                    self.errorMessage = "Konuşma tanıma izni verilmedi."
                 }
             }
         }
@@ -63,54 +58,69 @@ class SpeechToTextViewModel: ObservableObject {
         
         let audioSession = AVAudioSession.sharedInstance()
         do {
-            try audioSession.setCategory(.playAndRecord, mode: .measurement, options: .duckOthers)
+            // .measurement modu ses analizini daha ham verir, .default görselleştirme için daha iyidir
+            try audioSession.setCategory(.playAndRecord, mode: .default, options: .duckOthers)
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
-            self.errorMessage = "Ses oturumu ayarlanamadı: \(error.localizedDescription)"
+            self.errorMessage = "Ses oturumu hatası: \(error.localizedDescription)"
             return
         }
 
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        
-        guard let recognitionRequest = recognitionRequest else {
-            fatalError("SFSpeechAudioBufferRecognitionRequest oluşturulamadı.")
-        }
-        
+        guard let recognitionRequest = recognitionRequest else { fatalError("Request oluşturulamadı") }
         let inputNode = audioEngine.inputNode
-        
         recognitionRequest.shouldReportPartialResults = true
         
         recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest, resultHandler: { (result, error) in
-            
             var isFinal = false
-            
             if let result = result {
-                
                 self.transcribedText = result.bestTranscription.formattedString
                 isFinal = result.isFinal
             }
             
             if error != nil || isFinal {
-                self.audioEngine.stop()
+                self.stopAudioEngine()
                 inputNode.removeTap(onBus: 0)
-                
                 self.recognitionRequest = nil
                 self.recognitionTask = nil
-
                 DispatchQueue.main.async {
                     self.isRecording = false
+                    self.audioLevel = 0.0
                 }
             }
         })
 
         let recordingFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { (buffer, when) in
-
+        // Buffer size'ı biraz düşürdük ki daha sık tetiklensin
+        inputNode.installTap(onBus: 0, bufferSize: 512, format: recordingFormat) { (buffer, when) in
             self.recognitionRequest?.append(buffer)
+            
+            // *** GÜNCEL SES SEVİYESİ HESAPLAMA ***
+            if let channelData = buffer.floatChannelData {
+                let channelDataArray = channelData.pointee
+                let frameLength = Int(buffer.frameLength)
+                
+                // RMS (Root Mean Square) daha doğal bir ses dalgalanması verir
+                var sum: Float = 0
+                for i in 0..<frameLength {
+                    let sample = channelDataArray[i]
+                    sum += sample * sample
+                }
+                let rms = sqrt(sum / Float(frameLength))
+                
+                // Desibel yerine lineer bir büyüme faktörü kullanalım
+                // RMS genelde 0.001 - 0.1 arasında gelir, bunu görünür yapmak için çarpıyoruz.
+                let boost: Float = 15.0
+                let visualLevel = min(1.0, rms * boost)
+                
+                DispatchQueue.main.async {
+                    // Animasyonun titrememesi için yumuşak geçiş (Linear Interpolation)
+                    self.audioLevel = self.audioLevel * 0.6 + CGFloat(visualLevel) * 0.4
+                }
+            }
         }
-  
-        audioEngine.prepare()
         
+        audioEngine.prepare()
         do {
             try audioEngine.start()
             DispatchQueue.main.async {
@@ -118,19 +128,22 @@ class SpeechToTextViewModel: ObservableObject {
                 self.transcribedText = "Dinliyorum..."
             }
         } catch {
-            self.errorMessage = "Ses motoru başlatılamadı: \(error.localizedDescription)"
+            self.errorMessage = "Motor başlatılamadı: \(error.localizedDescription)"
         }
     }
     
     private func stopTranscription() {
-        audioEngine.stop()
+        stopAudioEngine()
         recognitionRequest?.endAudio()
-        
         DispatchQueue.main.async {
             self.isRecording = false
-            if self.transcribedText == "Dinliyorum..." {
-                self.transcribedText = "Konuşmanızı metne dönüştürmek için butona basın..."
-            }
+            self.audioLevel = 0.0
+        }
+    }
+    
+    private func stopAudioEngine() {
+        if audioEngine.isRunning {
+            audioEngine.stop()
         }
     }
 }

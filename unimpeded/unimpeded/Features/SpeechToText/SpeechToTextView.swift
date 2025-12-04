@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Lottie
 
 struct SpeechToTextView: View {
     
@@ -13,43 +14,51 @@ struct SpeechToTextView: View {
     
     var body: some View {
         VStack(spacing: 20) {
+            
+            Text("Konuşmanızı Metne Çevir")
+                .font(.headline)
+                .padding(.top, 20)
+            
             Spacer()
 
+            // Metin Alanı
             Text(viewModel.transcribedText)
-                .font(.title2)
+                .font(.title3)
+                .multilineTextAlignment(.center)
                 .padding()
                 .frame(maxWidth: .infinity, minHeight: 150)
                 .background(Color(.systemGray6))
-                .cornerRadius(10)
+                .cornerRadius(16)
                 .padding(.horizontal)
             
             Spacer()
 
+            // MARK: - Voice Assistant Sphere
+            // Butonun kendisi
             Button(action: {
                 viewModel.toggleRecording()
             }) {
-                Image(systemName: viewModel.isRecording ? "mic.fill" : "mic.slash.fill")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 40, height: 40)
-                    .padding(20)
-                    .background(viewModel.isRecording ? Color.red : Color.blue)
-                    .foregroundColor(.white)
-                    .clipShape(Circle())
-                    .shadow(radius: 10)
+                VoiceAssistantSphereView(
+                    state: viewModel.isRecording ? .speaking : .idle,
+                    audioLevel: viewModel.audioLevel, // Artık güçlendirilmiş ses verisi gidiyor
+                    agentKey: "ReflectionGuide"
+                )
+                // Kürenin boyutu BURADAN kontrol ediliyor
+                .frame(width: 180, height: 180)
             }
-            .padding(.bottom, 80)
+            .buttonStyle(PlainButtonStyle()) // Butonun varsayılan basma efektini kaldırır
+            .padding(.bottom, 50)
 
+            // Hata Mesajı
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
                     .foregroundColor(.red)
                     .font(.caption)
-                    .padding(.horizontal)
+                    .padding(.bottom, 10)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
-        .edgesIgnoringSafeArea(.bottom)
     }
 }
 
