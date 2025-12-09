@@ -12,16 +12,17 @@ struct SpeechToTextView: View {
     
     @StateObject private var viewModel = SpeechToTextViewModel()
     
+    @Environment(\.scenePhase) var scenePhase
+    
     var body: some View {
         VStack(spacing: 20) {
             
-            Text("Konuşmanızı Metne Çevir")
+            Text("Konuşmanı Metne Çevir")
                 .font(.headline)
                 .padding(.top, 20)
             
             Spacer()
 
-            // Metin Alanı
             Text(viewModel.transcribedText)
                 .font(.title3)
                 .multilineTextAlignment(.center)
@@ -33,23 +34,19 @@ struct SpeechToTextView: View {
             
             Spacer()
 
-            // MARK: - Voice Assistant Sphere
-            // Butonun kendisi
             Button(action: {
                 viewModel.toggleRecording()
             }) {
                 VoiceAssistantSphereView(
                     state: viewModel.isRecording ? .speaking : .idle,
-                    audioLevel: viewModel.audioLevel, // Artık güçlendirilmiş ses verisi gidiyor
+                    audioLevel: viewModel.audioLevel,
                     agentKey: "ReflectionGuide"
                 )
-                // Kürenin boyutu BURADAN kontrol ediliyor
                 .frame(width: 180, height: 180)
             }
-            .buttonStyle(PlainButtonStyle()) // Butonun varsayılan basma efektini kaldırır
+            .buttonStyle(PlainButtonStyle())
             .padding(.bottom, 50)
 
-            // Hata Mesajı
             if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
                     .foregroundColor(.red)
@@ -59,9 +56,13 @@ struct SpeechToTextView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemGroupedBackground))
+        .onDisappear {
+            viewModel.stopRecording()
+        }
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .background || newPhase == .inactive {
+                viewModel.stopRecording()
+            }
+        }
     }
-}
-
-#Preview {
-    SpeechToTextView()
 }

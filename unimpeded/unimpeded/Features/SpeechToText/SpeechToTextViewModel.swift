@@ -11,14 +11,10 @@ import AVFoundation
 
 class SpeechToTextViewModel: ObservableObject {
     
-    // MARK: - Published Properties
-    
     @Published var transcribedText: String = "Konuşmanızı metne dönüştürmek için butona basın..."
     @Published var isRecording: Bool = false
     @Published var errorMessage: String?
     @Published var audioLevel: CGFloat = 0.0
-    
-    // MARK: - Apple Speech Properties
     
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "tr-TR"))
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
@@ -36,6 +32,12 @@ class SpeechToTextViewModel: ObservableObject {
             startTranscription()
         }
     }
+    
+    func stopRecording() {
+            if isRecording {
+                stopTranscription()
+            }
+        }
     
     private func requestSpeechAuthorization() {
         SFSpeechRecognizer.requestAuthorization { authStatus in
@@ -58,7 +60,6 @@ class SpeechToTextViewModel: ObservableObject {
         
         let audioSession = AVAudioSession.sharedInstance()
         do {
-            // .measurement modu ses analizini daha ham verir, .default görselleştirme için daha iyidir
             try audioSession.setCategory(.playAndRecord, mode: .default, options: .duckOthers)
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
@@ -91,30 +92,23 @@ class SpeechToTextViewModel: ObservableObject {
         })
 
         let recordingFormat = inputNode.outputFormat(forBus: 0)
-        // Buffer size'ı biraz düşürdük ki daha sık tetiklensin
         inputNode.installTap(onBus: 0, bufferSize: 512, format: recordingFormat) { (buffer, when) in
             self.recognitionRequest?.append(buffer)
             
-            // *** GÜNCEL SES SEVİYESİ HESAPLAMA ***
             if let channelData = buffer.floatChannelData {
                 let channelDataArray = channelData.pointee
                 let frameLength = Int(buffer.frameLength)
                 
-                // RMS (Root Mean Square) daha doğal bir ses dalgalanması verir
                 var sum: Float = 0
                 for i in 0..<frameLength {
                     let sample = channelDataArray[i]
                     sum += sample * sample
                 }
                 let rms = sqrt(sum / Float(frameLength))
-                
-                // Desibel yerine lineer bir büyüme faktörü kullanalım
-                // RMS genelde 0.001 - 0.1 arasında gelir, bunu görünür yapmak için çarpıyoruz.
                 let boost: Float = 15.0
                 let visualLevel = min(1.0, rms * boost)
                 
                 DispatchQueue.main.async {
-                    // Animasyonun titrememesi için yumuşak geçiş (Linear Interpolation)
                     self.audioLevel = self.audioLevel * 0.6 + CGFloat(visualLevel) * 0.4
                 }
             }
