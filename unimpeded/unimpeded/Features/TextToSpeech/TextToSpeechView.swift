@@ -10,79 +10,116 @@ import SwiftUI
 struct TextToSpeechView: View {
     
     @StateObject private var viewModel = TextToSpeechViewModel()
-    
     @FocusState private var isFocused: Bool
     
     var body: some View {
-         VStack(spacing: 20) {
-             
-             Text("Metinden Sese")
-                 .font(.headline)
-                 .padding(.top)
-             
-             Spacer()
-             
-             ZStack(alignment: .topLeading) {
-                 if viewModel.textToSpeak.isEmpty {
-                     Text("Seslendirmek istediğiniz metni buraya yazın...")
-                         .foregroundColor(.gray)
-                         .padding(.top, 8)
-                         .padding(.leading, 5)
-                 }
-                 
-                 TextEditor(text: $viewModel.textToSpeak)
-                     .focused($isFocused)
-                     .frame(height: 200)
-                     .padding(4)
-                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+        ZStack {
+            Color(.systemGroupedBackground)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 25) {
+       
+                VStack(spacing: 5) {
+                    Text("Seslendir")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                    Text("Metninizi yazın, biz okuyalım.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 30)
+                
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Image(systemName: "keyboard")
+                            .foregroundColor(.purple)
+                        Text("Metin Girişi")
+                            .font(.headline)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        
+                        Text("\(viewModel.textToSpeak.count) karakter")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                    }
+                    .padding()
+                    .background(Color(.secondarySystemGroupedBackground))
+                    
+                    Divider()
+                    
+                    ZStack(alignment: .topLeading) {
+                        if viewModel.textToSpeak.isEmpty {
+                            Text("Buraya yazmaya başlayın...")
+                                .foregroundColor(.gray.opacity(0.6))
+                                .padding(.top, 12)
+                                .padding(.leading, 16)
+                        }
+                        
+                        TextEditor(text: $viewModel.textToSpeak)
+                            .focused($isFocused)
+                            .scrollContentBackground(.hidden)
+                            .padding(10)
+                            .frame(height: 200)
+                    }
+                    .background(Color(.secondarySystemGroupedBackground))
+                }
+                .cornerRadius(20)
+                .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
+                .padding(.horizontal)
+                
+                HStack(spacing: 20) {
+                    Button(action: {
+                        withAnimation { viewModel.clearText() }
+                        let impact = UIImpactFeedbackGenerator(style: .light)
+                        impact.impactOccurred()
+                    }) {
+                        VStack {
+                            Image(systemName: "trash")
+                                .font(.system(size: 20))
+                            Text("Temizle")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(.red.opacity(0.8))
+                        .frame(width: 80, height: 80)
+                        .background(Color(.secondarySystemGroupedBackground))
+                        .cornerRadius(20)
+                        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    }
+                    
+                    Button(action: {
+                        viewModel.speak()
+                        isFocused = false
+                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                        impact.impactOccurred()
+                    }) {
+                        HStack {
+                            Image(systemName: "waveform")
+                                .font(.title2)
+                            Text("Seslendir")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 80)
+                        .background(
+                            LinearGradient(gradient: Gradient(colors: [Color.blue, Color.purple]), startPoint: .topLeading, endPoint: .bottomTrailing)
                         )
-             }
-             .padding()
-             
-             Spacer()
-             
-             HStack(spacing : 20) {
-                 
-                 Button(action: {
-                     viewModel.clearText()
-                 }) {
-                     HStack {
-                         Image(systemName: "trash")
-                         Text("Temizle")
-                     }
-                     
-                     .frame(maxWidth: .infinity)
-                     .padding()
-                     .background(Color.red.opacity(0.8))
-                     .foregroundColor(.white)
-                     .cornerRadius(10)
-                 }
-                 
-                 Button(action: {
-                     viewModel.speak()
-                     isFocused = false
-                 }) {
-                     HStack {
-                         Image(systemName: "speaker.wave.2.fill")
-                         Text("Seslendir")
-                     }
-                     
-                     .frame(maxWidth: .infinity)
-                     .padding()
-                     .background(Color.blue)
-                     .foregroundColor(.white)
-                     .cornerRadius(10)
-                 }
-             }
-             .padding(.horizontal)
-             .padding(.bottom,30)
-         }
-         .padding()
-         
-         .onTapGesture {
-             isFocused = false
-         }
+                        .cornerRadius(20)
+                        .shadow(color: Color.blue.opacity(0.3), radius: 10, x: 0, y: 5)
+                    }
+                }
+                .padding(.horizontal)
+                
+                Spacer()
+            }
+            .onTapGesture {
+                isFocused = false
+            }
+        }
     }
+}
+
+#Preview {
+    TextToSpeechView()
 }
