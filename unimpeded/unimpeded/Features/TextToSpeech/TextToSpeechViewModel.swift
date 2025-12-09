@@ -14,30 +14,57 @@ class TextToSpeechViewModel: ObservableObject {
     
     private let synthesizer = AVSpeechSynthesizer()
     
+    private var bestTurkishVoice: AVSpeechSynthesisVoice?
+    
+    init() {
+        findBestVoice()
+    }
+    
+    // MARK: - Voice Selection Logic (YENİ)
+    private func findBestVoice() {
+ 
+        let voices = AVSpeechSynthesisVoice.speechVoices()
+ 
+        let turkishVoices = voices.filter { $0.language == "tr-TR" }
+        
+        if let premiumVoice = turkishVoices.first(where: { $0.quality == .premium }) {
+            bestTurkishVoice = premiumVoice
+            print("TTS: Premium ses seçildi: \(premiumVoice.name)")
+        } else if let enhancedVoice = turkishVoices.first(where: { $0.quality == .enhanced }) {
+            bestTurkishVoice = enhancedVoice
+            print("TTS: Geliştirilmiş (Enhanced) ses seçildi: \(enhancedVoice.name)")
+        } else {
+            bestTurkishVoice = AVSpeechSynthesisVoice(language: "tr-TR")
+            print("TTS: Standart ses seçildi")
+        }
+    }
+    
     func speak() {
         
         guard !textToSpeak.isEmpty else { return }
         
-        // MARK: - Audio Session Fix
-        // Sesin ahize yerine hoparlörden çıkmasını sağlayan ayar.
+        // MARK: - Audio Session Fix (Önceki ayarımız burada duruyor)
         let audioSession = AVAudioSession.sharedInstance()
         do {
-            // .playAndRecord: Uygulamada mikrofon da kullanıldığı için bu kategori şart.
-            // .defaultToSpeaker: Sesi zorla hoparlöre yönlendirir.
             try audioSession.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
             try audioSession.setActive(true)
         } catch {
             print("Ses oturumu hatası: \(error.localizedDescription)")
         }
         
-        // Konuşma ayarları
         let utterance = AVSpeechUtterance(string: textToSpeak)
-        utterance.voice = AVSpeechSynthesisVoice(language: "tr-TR")
-        utterance.rate = 0.5
-        utterance.pitchMultiplier = 1.0
-        utterance.volume = 1.0
         
-        // Zaten konuşuyorsa durdur, yenisine başla
+        if let voice = bestTurkishVoice {
+            utterance.voice = voice
+        } else {
+            utterance.voice = AVSpeechSynthesisVoice(language: "tr-TR")
+        }
+        
+        utterance.rate = 0.40
+        utterance.pitchMultiplier = 0.95
+        utterance.volume = 1.0
+        utterance.postUtteranceDelay = 0.2
+        
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
