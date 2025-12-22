@@ -8,7 +8,6 @@
 import SwiftUI
 import WebKit
 
-// GIF'leri oynatmak için bir yardımcı görünüm
 struct GifImage: UIViewRepresentable {
     private let name: String
 
@@ -18,12 +17,10 @@ struct GifImage: UIViewRepresentable {
 
     func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView()
-        // Arka planı şeffaf yap ki kartın rengi görünsün
         webView.isOpaque = false
         webView.backgroundColor = .clear
-        webView.scrollView.isScrollEnabled = false // Kaydırmayı kapat
+        webView.scrollView.isScrollEnabled = false
         
-        // GIF dosyasını bul ve yükle
         if let url = Bundle.main.url(forResource: name, withExtension: "gif") {
             do {
                 let data = try Data(contentsOf: url)
@@ -44,6 +41,5 @@ struct GifImage: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        // Gerekirse güncelleme işlemleri burada yapılır
     }
 }
