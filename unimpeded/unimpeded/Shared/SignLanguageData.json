@@ -1,0 +1,12 @@
+[
+    { "id": 1, "word": "merhaba", "gifName": "tid_merhaba" },
+    { "id": 2, "word": "nasılsın", "gifName": "tid_nasilsin" },
+    { "id": 3, "word": "teşekkür ederim", "gifName": "tid_tesekkur" },
+    { "id": 4, "word": "seni seviyorum", "gifName": "tid_seniseviyorum" },
+    { "id": 5, "word": "yardım", "gifName": "tid_yardim" },
+    { "id": 6, "word": "su", "gifName": "tid_su" },
+    { "id": 7, "word": "yemek", "gifName": "tid_yemek" },
+    { "id": 8, "word": "evet", "gifName": "tid_evet" },
+    { "id": 9, "word": "hayır", "gifName": "tid_hayir" },
+    { "id": 10, "word": "tamam", "gifName": "tid_tamam" }
+]
