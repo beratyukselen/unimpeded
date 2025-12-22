@@ -25,22 +25,22 @@ struct SignLanguageDetailView: View {
                     .padding(.top, 20)
                 
                 ZStack {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color.white)
-                        .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                    
+                    Color.black
+                        .cornerRadius(20)
+
                     if Bundle.main.path(forResource: word.gifName, ofType: "gif") != nil {
                         GifImage(word.gifName)
-                            .scaledToFit()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .cornerRadius(20)
                     } else {
                         Image(systemName: "hands.sparkles.fill")
                             .font(.system(size: 80))
-                            .foregroundColor(.blue.opacity(0.3))
+                            .foregroundColor(.white.opacity(0.4))
                     }
                 }
-                .frame(height: 300)
+                .frame(height: 340)
                 .padding(.horizontal)
+                .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 6)
                 
                 if viewModel.isLearned(word) {
                     HStack {

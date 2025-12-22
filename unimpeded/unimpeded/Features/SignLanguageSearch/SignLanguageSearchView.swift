@@ -119,7 +119,7 @@ struct SignWordCard: View {
                 
                 if Bundle.main.path(forResource: item.gifName, ofType: "gif") != nil {
                     GifImage(item.gifName)
-                        .scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .allowsHitTesting(false)
                 } else {
                     Image(systemName: "hands.sparkles.fill")
