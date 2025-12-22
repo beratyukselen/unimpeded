@@ -76,38 +76,42 @@ struct SignLanguageSearchView: View {
     }
 }
 
+// MARK: - Yardımcı Kart Tasarımı (Alt Bileşen)
 struct SignWordCard: View {
     let item: SignWord
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) { // Aradaki boşluğu sıfırladık
+            // GIF veya Görsel Alanı
             ZStack {
-                Color.blue.opacity(0.1)
+                Color.blue.opacity(0.1) // Arka plan rengi
                 
-                if UIImage(named: item.gifName) != nil {
-                    Image(item.gifName)
-                        .resizable()
+                // Dosya sisteminde bu isimde bir .gif var mı kontrol et
+                if Bundle.main.path(forResource: item.gifName, ofType: "gif") != nil {
+                    // Varsa GIF oynatıcıyı kullan
+                    GifImage(item.gifName)
                         .scaledToFit()
+                        // Web görünümü olduğu için tıklamaları engelle
+                        .allowsHitTesting(false)
                 } else {
+                    // Yoksa placeholder göster
                     Image(systemName: "hands.sparkles.fill")
                         .font(.system(size: 40))
-                        .foregroundColor(.blue)
+                        .foregroundColor(.blue.opacity(0.5))
                 }
             }
-            .frame(height: 120)
-            .cornerRadius(12)
+            .frame(height: 140) // Yüksekliği biraz artırdık
+            .clipped() // Dışarı taşan kısımları kırp
             
+            // Kelime Adı
             Text(item.word.capitalized)
                 .font(.headline)
                 .foregroundColor(.primary)
-                .padding(.vertical, 8)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .background(Color(.secondarySystemGroupedBackground))
         }
-        .background(Color(.secondarySystemGroupedBackground))
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
     }
-}
-
-#Preview {
-    SignLanguageSearchView()
 }
