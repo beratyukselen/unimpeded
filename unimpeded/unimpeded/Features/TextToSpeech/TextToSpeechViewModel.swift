@@ -20,7 +20,6 @@ class TextToSpeechViewModel: ObservableObject {
         findBestVoice()
     }
     
-    // MARK: - Voice Selection Logic (YENİ)
     private func findBestVoice() {
  
         let voices = AVSpeechSynthesisVoice.speechVoices()
@@ -43,7 +42,6 @@ class TextToSpeechViewModel: ObservableObject {
         
         guard !textToSpeak.isEmpty else { return }
         
-        // MARK: - Audio Session Fix (Önceki ayarımız burada duruyor)
         let audioSession = AVAudioSession.sharedInstance()
         do {
             try audioSession.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)

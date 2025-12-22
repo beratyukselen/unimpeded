@@ -18,7 +18,6 @@ struct LottieView: UIViewRepresentable {
     func makeUIView(context: Context) -> LottieAnimationView {
         let view = LottieAnimationView(name: filename, bundle: .main)
         
-        // View'a şu anki dosya adını "etiket" olarak yapıştırıyoruz
         view.accessibilityIdentifier = filename
         
         view.loopMode = loopMode
@@ -33,24 +32,19 @@ struct LottieView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: LottieAnimationView, context: Context) {
-        // DÜZELTME: animation.name yerine, kaydettiğimiz etiketi (accessibilityIdentifier) kontrol ediyoruz
         if uiView.accessibilityIdentifier != filename {
             
-            // Yeni animasyonu yükle
             if let animation = LottieAnimation.named(filename) {
                 uiView.animation = animation
-                // Yeni ismi etikete kaydet
                 uiView.accessibilityIdentifier = filename
                 uiView.play()
             }
         }
         
-        // Diğer özellikleri güncelle
         uiView.loopMode = loopMode
         uiView.animationSpeed = speed
         uiView.contentMode = contentMode
         
-        // Oynatma durumunu kontrol et
         if isPlaying && !uiView.isAnimationPlaying {
             uiView.play()
         } else if !isPlaying && uiView.isAnimationPlaying {
